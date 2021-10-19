@@ -1,0 +1,275 @@
+---
+title: "response_processing"
+author: "jjm-w"
+date: "16/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plotly) # to make interactive plots
+```
+
+```{r}
+data <- read_csv("../data/knowledge_data.csv") # qualtrics data
+actual_values <- read_csv("../data/actual_values.csv") # correct values
+actual_values <- pivot_longer(actual_values, everything(), values_to = "actual_value")
+
+# *** actual values ***
+# reorder levels
+actual_values$name <- factor(actual_values$name, levels = c('butter_1',
+'milk_1',
+'yoghurt_1',
+'cheese_1',
+'beef_1',
+'eggs_1',
+'chicken_1',
+'cod_1',
+'ham_1',
+'tuna_1',
+'pasta_1',
+'apple_1',
+'soy_milk_1',
+'margarine_1',
+'soy_yoghurt_1',
+'tofu_1',
+'lentils_1',
+'rice_1',
+'aubergine_1',
+'sunflower_oil_1'))
+
+# rename levels
+levels(actual_values$name) <- c('Butter',
+'Milk',
+'Yoghurt',
+'Cheese',
+'Beef',
+'Eggs',
+'Chicken',
+'Cod',
+'Ham',
+'Tuna',
+'Pasta',
+'Apple',
+'Soy milk',
+'Margarine',
+'Soy yoghurt',
+'Tofu',
+'Lentils',
+'Rice',
+'Aubergine',
+'Sunflower oil')
+
+# *** df ***
+# get rid of first two rows and select variable columns
+df <- data.frame(data[-c(1:2),c(which(colnames(data) == "butter_1"):which(colnames(data) == "sunflower_oil_1"))])
+
+# make variables numeric
+for(i in 1:ncol(df)){
+  df[,i] <- as.numeric(df[,i])
+}
+
+# make long
+df_long <- pivot_longer(df, everything(), 
+                        values_to = "value")
+
+df_long$name <- as.factor(df_long$name) 
+
+# reorder levels
+df_long$name <- factor(df_long$name, levels = c('butter_1',
+'milk_1',
+'yoghurt_1',
+'cheese_1',
+'beef_1',
+'eggs_1',
+'chicken_1',
+'cod_1',
+'ham_1',
+'tuna_1',
+'pasta_1',
+'apple_1',
+'soy_milk_1',
+'margarine_1',
+'soy_yoghurt_1',
+'tofu_1',
+'lentils_1',
+'rice_1',
+'aubergine_1',
+'sunflower_oil_1'))
+
+# rename levels
+levels(df_long$name) <- c('Butter',
+'Milk',
+'Yoghurt',
+'Cheese',
+'Beef',
+'Eggs',
+'Chicken',
+'Cod',
+'Ham',
+'Tuna',
+'Pasta',
+'Apple',
+'Soy milk',
+'Margarine',
+'Soy yoghurt',
+'Tofu',
+'Lentils',
+'Rice',
+'Aubergine',
+'Sunflower oil')
+
+# *** descriptives ***
+# calculate mean and sd
+mean <- c()
+sd <- c()
+for(i in 1:ncol(df)){
+  mean[i] <- mean(df[,i])
+  sd[i] <- sd(df[,i])
+}
+
+# make descriptives df
+descriptives <- data.frame(rbind(mean,sd))
+colnames(descriptives) <- colnames(df)
+
+# make long
+desc_long <- pivot_longer(descriptives, everything(), 
+                          values_to = "value")
+desc_final <- cbind(desc_long[1:(nrow(desc_long)/2),], desc_long[(nrow(desc_long)/2 + 1):nrow(desc_long),2])
+colnames(desc_final) <- c("name","mean","sd")
+
+# reorder levels
+desc_final$name <- factor(desc_final$name, levels = c('butter_1',
+'milk_1',
+'yoghurt_1',
+'cheese_1',
+'beef_1',
+'eggs_1',
+'chicken_1',
+'cod_1',
+'ham_1',
+'tuna_1',
+'pasta_1',
+'apple_1',
+'soy_milk_1',
+'margarine_1',
+'soy_yoghurt_1',
+'tofu_1',
+'lentils_1',
+'rice_1',
+'aubergine_1',
+'sunflower_oil_1'))
+
+# rename levels
+levels(desc_final$name) <- c('Butter',
+'Milk',
+'Yoghurt',
+'Cheese',
+'Beef',
+'Eggs',
+'Chicken',
+'Cod',
+'Ham',
+'Tuna',
+'Pasta',
+'Apple',
+'Soy milk',
+'Margarine',
+'Soy yoghurt',
+'Tofu',
+'Lentils',
+'Rice',
+'Aubergine',
+'Sunflower oil')
+```
+
+```{r}
+plot_data <- merge(desc_final, actual_values, by = "name")
+
+# mean and sd plot
+ggplot(plot_data, aes(name, mean)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd)) +
+  coord_flip() +
+  geom_point(data = plot_data, aes(name, actual_value), colour = "red") +
+  theme_bw() +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 200)) +
+  ggtitle("Plot showing your estimates compared with actual emissions") +
+  labs(caption = "Black dots are your mean estimates, red dots are actual emissions") +
+  theme(plot.caption = element_text(face = "italic"))
+
+# boxplot
+ggplot(df_long, aes(name, value)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_point(data = actual_values, aes(name, actual_value), colour = "red", size = 2) +
+  theme_bw() +
+  xlab("Food item") + ylab("g CO2 equivalents") +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 200)) +
+  ggtitle("Plot showing your estimates compared with actual emissions") +
+  labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+  theme(plot.caption = element_text(face = "italic"))
+
+# boxplot with line separating animal and plant-based
+ggplot(df_long, aes(name, value)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_point(data = actual_values, aes(name, actual_value), colour = "red", size = 2) +
+  theme_bw() +
+  geom_vline(xintercept = 10.5, linetype = "dotted") +
+  xlab("Food item") + ylab("g CO2 equivalents") +
+  ggtitle("Plot showing your estimates compared with actual emissions") +
+  labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+  theme(plot.caption = element_text(face = "italic")) +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 200))
+```
+```{r more_viz}
+
+# boxplot with line separating animal and plant-based
+Jo_plot_formatted<-ggplot(df_long, aes(name, value)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_point(data = actual_values, aes(name, actual_value), colour = "red", size = 2) +
+  theme_bw() +
+  geom_vline(xintercept = 10.5, linetype = "dotted") +
+  xlab("") + 
+  ylab(bquote(~CO[2]~ equivalent (g))) +
+  ggtitle("Your estimates vs. actual emissions") +
+  labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+  theme(plot.caption = element_text(face = "italic")) +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 500))
+
+Jo_plot<-ggplot(df_long, aes(name, value)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_point(data = actual_values, aes(name, actual_value), colour = "red", size = 2) +
+  theme_bw() +
+  geom_vline(xintercept = 10.5, linetype = "dotted") +
+  xlab("") + 
+  ylab("CO2 equivalent (g)") +
+  ggtitle("Your estimates vs. actual emissions") +
+  labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+  theme(plot.caption = element_text(face = "italic")) +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 500))
+
+Jo_plot_formatted
+
+
+
+ggplotly(Jo_plot)
+
+# 1. sort by actual value descending order
+# change boxplot??
+# add plant & animal based var -> different colour
+# 5. change alpha
+# 6. change how many decimals are displayed (trace?)
+
+
+
+
+```
+
