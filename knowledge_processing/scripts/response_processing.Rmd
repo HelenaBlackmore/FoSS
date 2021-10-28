@@ -229,7 +229,6 @@ ggplot(df_long, aes(name, value)) +
 ```
 ```{r more_viz}
 
-# boxplot with line separating animal and plant-based
 Jo_plot_formatted<-ggplot(df_long, aes(name, value)) + 
   geom_boxplot() +
   coord_flip() +
@@ -262,14 +261,153 @@ Jo_plot_formatted
 
 ggplotly(Jo_plot)
 
-# 1. sort by actual value descending order
-# change boxplot??
-# add plant & animal based var -> different colour
-# 5. change alpha
-# 6. change how many decimals are displayed (trace?)
+
 
 
 
 
 ```
+
+# change boxplot??
+# add plant & animal based var -> different colour
+# 5. change alpha
+# 6. change how many decimals are displayed (trace?)
+```{r more plotting}
+# add variable source: animal, plant
+
+vegan <- c("Pasta","Apple","Soy milk", "Margarine", "Soy yoghurt", "Tofu", "Lentils", "Rice", "Aubergine", "Sunflower oil")
+
+df_long<-df_long %>% 
+  mutate(source=name)
+
+for (i in df_long$source)     # this doesn't work
+  {
+  if(df_long$source[i] %in% vegan) {
+    df_long$source[i]="plant"
+  } else {
+     df_long$source[i]="animal"
+  }
+}
+
+
+
+```
+
+```{r order by actual impact}
+actual_values<- actual_values %>% 
+  arrange(desc(actual_value))
+
+```
+```{r order df_long}
+#order df_long to match order of actual values
+reordered_idx<-match(actual_values$name, df_long$name) # extracting indexes
+
+df_long<-df_long[reordered_idx,] # reordering df_long to match actual-values(now ordered)
+
+```
+
+<<<<<<< HEAD
+foss_theme<- function () { 
+    theme_classic(base_size=12, base_family="Avenir") %+replace% 
+        theme(
+           text=element_text(family="Tahoma", size=16),
+           panel.grid.major.y = element_line(colour = "grey88", size=0.1),
+           panel.grid.major.x = element_line(colour = "grey80", size = 0.1),
+           plot.title = element_text(hjust = 0.5),
+           legend.position="none",
+           plot.caption = element_text(face = "italic")
+        )
+=======
+```{r}
+actual_values<-actual_values %>% 
+  mutate(source=name)
+
+for (i in actual_values$source)     # this doesn't work
+  {
+  if(actual_values$source[i] %in% vegan) {
+    actual_values$source[i]="plant"
+  } else {
+    actual_values$source[i]="animal"
+  }
+>>>>>>> parent of 10af3f3 (better plots)
+}
+
+```
+
+
+```{r}
+<<<<<<< HEAD
+#plot with nicely formatted title
+# 
+# Jo_plot_formatted<-ggplot(df_long, aes(name, value, fill =source)) + 
+#   geom_jitter( aes(fill=source, color = source), size=0.4, width = 0.1, alpha=0.5) +
+#   coord_flip() +
+#   geom_point(data = actual_values, aes(name, actual_value, color = source),  size = 2) +
+#   scale_colour_manual(values = c("red3", "green4"))+
+#   scale_fill_manual(values = c("red3", "green4"))+
+#   xlab("") + 
+#   ylab(bquote(~CO[2]~ equivalent (g))) +
+#   ggtitle("Your estimates vs. actual emissions") +
+#   labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+#   scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 500))+
+#   foss_theme()
+
+
+=======
+Jo_plot_formatted<-ggplot(df_long, aes(name, value)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_point(data = actual_values, aes(name, actual_value), colour = "red", size = 2) +
+  theme_bw() +
+  xlab("") + 
+  ylab(bquote(~CO[2]~ equivalent (g))) +
+  ggtitle("Your estimates vs. actual emissions") +
+  labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+  theme(plot.caption = element_text(face = "italic")) +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 500))
+>>>>>>> parent of 10af3f3 (better plots)
+
+Jo_plot<-ggplot(df_long, aes(name, value)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_point(data = actual_values, aes(name, actual_value), colour = source, size = 2) +
+  theme_classic()+
+  geom_vline(xintercept = 10.5, linetype = "dotted") +
+  xlab("") + 
+  ylab("CO2 equivalent (g)") +
+  ggtitle("Your estimates vs. actual emissions") +
+<<<<<<< HEAD
+  labs(caption = "small dots are individual estimates, large dots are actual emissions") +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 500))+
+  foss_theme()
+
+
+```
+
+
+```{r plotly_finish}
+
+#Jo_plot_formatted
+
+fig<-ggplotly(Jo_plot)
+
+fig <- style(fig, hoverinfo = c("y"))
+fig
+
+htmlwidgets::saveWidget(as_widget(fig), "../images/CF_quiz.html")
+htmlwidgets::saveWidget(as_widget(fig), "C:/Users/Helena/R_projects/helena_website/docs/CF_estimates.html")
+=======
+  labs(caption = "Boxplots are your estimates, red dots are actual emissions") +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000, 500))
+
+Jo_plot_formatted
+
+
+>>>>>>> parent of 10af3f3 (better plots)
+
+
+
+```
+
+
 
